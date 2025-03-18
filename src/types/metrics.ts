@@ -12,6 +12,21 @@ export interface TrendPoint {
   y: number;
 }
 
+export interface AdditionalFields {
+  novAvg?: string | number;
+  oct?: string | number;
+  sep?: string | number;
+  aug?: string | number;
+  july?: string | number;
+  june?: string | number;
+  mayAvg?: string | number;
+  aprAvg?: string | number;
+  marAvg?: string | number;
+  febAvgLastYear?: string | number;
+  janAvgLastYear?: string | number;
+  [key: string]: string | number | undefined;
+}
+
 export interface Metric {
   id: string;
   l1Category: string;
@@ -23,6 +38,7 @@ export interface Metric {
   janAvg: MetricValue;
   decAvg: MetricValue;
   trendData: TrendPoint[];
+  additionalFields?: AdditionalFields;
 }
 
 export interface Category {

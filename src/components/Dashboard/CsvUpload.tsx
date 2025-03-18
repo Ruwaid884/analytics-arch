@@ -56,9 +56,41 @@ const CsvUpload = ({ onDataUpdate }: CsvUploadProps) => {
     // Group metrics by category
     const categoriesMap = new Map<string, Metric[]>();
     
+    // Define column mappings based on the provided images
+    const columnMappings = {
+      currentPeriod: "10_Mar_16_Mar",
+      previousPeriod: "03_Mar_09_Mar",
+      febAvg: "Feb_Avg",
+      janAvg: "Jan_Avg",
+      decAvg: "Dec_Avg",
+      l1Category: "l1_metric",
+      l2Category: "l2_metric",
+      id: "id",
+      name: "name",
+      // Additional periods from the images
+      novAvg: "Nov_Avg",
+      oct: "Oct",
+      sep: "Sep",
+      aug: "Aug",
+      july: "July",
+      june: "June",
+      mayAvg: "May_Avg",
+      aprAvg: "Apr_Avg",
+      marAvg: "Mar_Avg",
+      febAvgLastYear: "Feb_Avg_Last_Year",
+      janAvgLastYear: "Jan_Avg_Last_Year"
+    };
+    
     data.forEach((row) => {
-      const categoryName = row.category || "Uncategorized";
-      const metricId = row.id || `metric-${Math.random().toString(36).substr(2, 9)}`;
+      // Use l1_metric as category if present, otherwise fallback
+      const categoryName = row[columnMappings.l1Category] || row.category || "Uncategorized";
+      
+      // Skip empty rows
+      if (!categoryName || !row[columnMappings.name]) {
+        return;
+      }
+      
+      const metricId = row[columnMappings.id] || row.id || `metric-${Math.random().toString(36).substr(2, 9)}`;
       
       if (!categoriesMap.has(categoryName)) {
         categoriesMap.set(categoryName, []);
@@ -70,7 +102,7 @@ const CsvUpload = ({ onDataUpdate }: CsvUploadProps) => {
         const trendPointKey = `trend_${i}`;
         const yValue = row[trendPointKey] 
           ? parseFloat(row[trendPointKey]) 
-          : generateRandomTrendValue(row.currentPeriod || 100);
+          : generateRandomTrendValue(parseValueOrEmpty(row[columnMappings.currentPeriod]) || 100);
         
         trendData.push({
           x: i,
@@ -79,8 +111,8 @@ const CsvUpload = ({ onDataUpdate }: CsvUploadProps) => {
       }
       
       // Determine trend direction and percentage
-      const currentValue = parseValueOrEmpty(row.currentPeriod);
-      const previousValue = parseValueOrEmpty(row.previousPeriod);
+      const currentValue = parseValueOrEmpty(row[columnMappings.currentPeriod]);
+      const previousValue = parseValueOrEmpty(row[columnMappings.previousPeriod]);
       
       let trend: 'up' | 'down' | 'stable' = 'stable';
       let trendPercentage = 0;
@@ -94,19 +126,33 @@ const CsvUpload = ({ onDataUpdate }: CsvUploadProps) => {
       // Create metric object
       const metric: Metric = {
         id: metricId,
-        l1Category: row.l1Category || categoryName,
-        l2Category: row.l2Category || categoryName,
-        name: row.name || `Metric ${metricId}`,
+        l1Category: row[columnMappings.l1Category] || categoryName,
+        l2Category: row[columnMappings.l2Category] || categoryName,
+        name: row[columnMappings.name] || `Metric ${metricId}`,
         currentPeriod: { 
           value: currentValue,
           trend,
           trendPercentage: trendPercentage > 0 ? parseFloat(trendPercentage.toFixed(1)) : undefined
         },
         previousPeriod: { value: previousValue },
-        febAvg: { value: parseValueOrEmpty(row.febAvg) },
-        janAvg: { value: parseValueOrEmpty(row.janAvg) },
-        decAvg: { value: parseValueOrEmpty(row.decAvg) },
-        trendData: trendData
+        febAvg: { value: parseValueOrEmpty(row[columnMappings.febAvg]) },
+        janAvg: { value: parseValueOrEmpty(row[columnMappings.janAvg]) },
+        decAvg: { value: parseValueOrEmpty(row[columnMappings.decAvg]) },
+        trendData: trendData,
+        // Additional fields
+        additionalFields: {
+          novAvg: parseValueOrEmpty(row[columnMappings.novAvg]),
+          oct: parseValueOrEmpty(row[columnMappings.oct]),
+          sep: parseValueOrEmpty(row[columnMappings.sep]),
+          aug: parseValueOrEmpty(row[columnMappings.aug]),
+          july: parseValueOrEmpty(row[columnMappings.july]),
+          june: parseValueOrEmpty(row[columnMappings.june]),
+          mayAvg: parseValueOrEmpty(row[columnMappings.mayAvg]),
+          aprAvg: parseValueOrEmpty(row[columnMappings.aprAvg]),
+          marAvg: parseValueOrEmpty(row[columnMappings.marAvg]),
+          febAvgLastYear: parseValueOrEmpty(row[columnMappings.febAvgLastYear]),
+          janAvgLastYear: parseValueOrEmpty(row[columnMappings.janAvgLastYear])
+        }
       };
       
       categoriesMap.get(categoryName)!.push(metric);
@@ -115,11 +161,13 @@ const CsvUpload = ({ onDataUpdate }: CsvUploadProps) => {
     // Convert map to array of categories
     const categories: Category[] = [];
     categoriesMap.forEach((metrics, name) => {
-      categories.push({
-        id: name.toLowerCase().replace(/\s+/g, '-'),
-        name,
-        metrics
-      });
+      if (metrics.length > 0) {
+        categories.push({
+          id: name.toLowerCase().replace(/\s+/g, '-'),
+          name,
+          metrics
+        });
+      }
     });
     
     return categories;
@@ -127,6 +175,9 @@ const CsvUpload = ({ onDataUpdate }: CsvUploadProps) => {
   
   // Helper to generate random trend values
   const generateRandomTrendValue = (baseValue: number) => {
+    if (typeof baseValue !== 'number' || isNaN(baseValue)) {
+      baseValue = 100;
+    }
     const volatility = 0.05;
     const randomFactor = 1 + (Math.random() * volatility * 2 - volatility);
     return baseValue * randomFactor;
