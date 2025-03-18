@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, FileUp } from "lucide-react";
+import { Upload, FileUp, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Category, Metric, TrendPoint } from "@/types/metrics";
 import Papa from "papaparse";
@@ -23,6 +24,7 @@ const CsvUpload = ({ onDataUpdate }: CsvUploadProps) => {
     }
 
     setIsUploading(true);
+    toast.loading("Processing CSV data...");
     
     Papa.parse(file, {
       header: true,
@@ -30,9 +32,11 @@ const CsvUpload = ({ onDataUpdate }: CsvUploadProps) => {
         try {
           const parsedData = processCsvData(results.data);
           onDataUpdate(parsedData);
+          toast.dismiss();
           toast.success("Dashboard updated with new data");
         } catch (error) {
           console.error("Error processing CSV:", error);
+          toast.dismiss();
           toast.error("Failed to process CSV. Please check the format.");
         } finally {
           setIsUploading(false);
@@ -40,6 +44,7 @@ const CsvUpload = ({ onDataUpdate }: CsvUploadProps) => {
       },
       error: (error) => {
         console.error("Error parsing CSV:", error);
+        toast.dismiss();
         toast.error("Failed to parse CSV file");
         setIsUploading(false);
       }
@@ -161,7 +166,7 @@ const CsvUpload = ({ onDataUpdate }: CsvUploadProps) => {
           >
             {isUploading ? (
               <>
-                <Upload className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Uploading...
               </>
             ) : (

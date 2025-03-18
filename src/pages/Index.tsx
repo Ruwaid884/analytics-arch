@@ -7,6 +7,7 @@ import DrillDownChart from "@/components/Dashboard/DrillDownChart";
 import MetricInsights from "@/components/Dashboard/MetricInsights";
 import CsvUpload from "@/components/Dashboard/CsvUpload";
 import CsvTemplate from "@/components/Dashboard/CsvTemplate";
+import { Button } from "@/components/ui/button";
 import { mockCategories, periods } from "@/utils/mockData";
 import { Category } from "@/types/metrics";
 
