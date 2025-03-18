@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
 import DashboardSummary from "@/components/Dashboard/DashboardSummary";
@@ -124,7 +123,6 @@ const Index = () => {
         </div>
         
         <div className="mt-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Analysis & Insights</h2>
           <MetricInsights categories={categories} />
         </div>
       </div>
