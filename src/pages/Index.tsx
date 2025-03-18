@@ -5,7 +5,10 @@ import DashboardSummary from "@/components/Dashboard/DashboardSummary";
 import MetricsTable from "@/components/Dashboard/MetricsTable";
 import DrillDownChart from "@/components/Dashboard/DrillDownChart";
 import MetricInsights from "@/components/Dashboard/MetricInsights";
+import CsvUpload from "@/components/Dashboard/CsvUpload";
+import CsvTemplate from "@/components/Dashboard/CsvTemplate";
 import { mockCategories, periods } from "@/utils/mockData";
+import { Category } from "@/types/metrics";
 
 const availablePeriods = [
   { value: "current", label: "10 Mar - 16 Mar" },
@@ -19,6 +22,8 @@ const availablePeriods = [
 const Index = () => {
   const [currentPeriod, setCurrentPeriod] = useState("current");
   const [currentView, setCurrentView] = useState("table");
+  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const [isUsingMockData, setIsUsingMockData] = useState(true);
 
   const handlePreviousPeriod = () => {
     const currentIndex = availablePeriods.findIndex(p => p.value === currentPeriod);
@@ -32,6 +37,20 @@ const Index = () => {
     if (currentIndex > 0) {
       setCurrentPeriod(availablePeriods[currentIndex - 1].value);
     }
+  };
+
+  const handleDataUpdate = (newCategories: Category[]) => {
+    setCategories(newCategories);
+    setIsUsingMockData(false);
+    
+    // Reset to default view when new data is loaded
+    setCurrentView("table");
+    setCurrentPeriod("current");
+  };
+
+  const resetToMockData = () => {
+    setCategories(mockCategories);
+    setIsUsingMockData(true);
   };
 
   // Find the current and previous period labels
@@ -55,14 +74,32 @@ const Index = () => {
       />
       
       <div className="container py-6 flex-1">
-        <DashboardSummary />
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex space-x-4 items-center">
+            <CsvUpload onDataUpdate={handleDataUpdate} />
+            <CsvTemplate />
+          </div>
+          
+          {!isUsingMockData && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={resetToMockData}
+              className="text-xs"
+            >
+              Reset to Default Data
+            </Button>
+          )}
+        </div>
+        
+        <DashboardSummary categories={categories} />
         
         <div className="mt-8">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Key Metrics</h2>
           
           {currentView === "table" ? (
             <>
-              {mockCategories.map((category) => (
+              {categories.map((category) => (
                 <MetricsTable
                   key={category.id}
                   category={category}
@@ -87,7 +124,7 @@ const Index = () => {
         
         <div className="mt-8">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Analysis & Insights</h2>
-          <MetricInsights />
+          <MetricInsights categories={categories} />
         </div>
       </div>
     </div>

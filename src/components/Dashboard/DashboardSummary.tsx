@@ -2,6 +2,7 @@
 import { ArrowDownIcon, ArrowUpIcon, TrendingUpIcon } from "lucide-react";
 import TrendChart from "./TrendChart";
 import { cn } from "@/lib/utils";
+import { Category } from "@/types/metrics";
 
 interface MetricSummaryProps {
   title: string;
@@ -52,79 +53,106 @@ const MetricSummary = ({
   );
 };
 
-const DashboardSummary = () => {
+interface DashboardSummaryProps {
+  categories: Category[];
+}
+
+const DashboardSummary = ({ categories }: DashboardSummaryProps) => {
+  // Find key metrics for summary cards
+  const findMetric = (categoryName: string, metricName: string) => {
+    const category = categories.find(c => c.name.toLowerCase().includes(categoryName.toLowerCase()));
+    if (!category) return null;
+    
+    return category.metrics.find(m => m.name.toLowerCase().includes(metricName.toLowerCase()));
+  };
+  
+  // Get total bookings metric
+  const totalBookingsMetric = findMetric("bookings", "total bookings");
+  
+  // Get conversion metric
+  const overallConversionMetric = findMetric("conversion", "overall conversion");
+  
+  // Calculate app bookings (sum of relevant metrics)
+  const calculateAppBookings = () => {
+    const bookingsCategory = categories.find(c => c.name.toLowerCase().includes("bookings"));
+    if (!bookingsCategory) return null;
+    
+    const appMetrics = bookingsCategory.metrics.filter(m => 
+      m.name.toLowerCase().includes("android") || 
+      m.name.toLowerCase().includes("ios") || 
+      m.name.toLowerCase().includes("app")
+    );
+    
+    if (appMetrics.length === 0) return null;
+    
+    const totalAppBookings = appMetrics.reduce((sum, metric) => {
+      const value = typeof metric.currentPeriod.value === 'number' ? metric.currentPeriod.value : 0;
+      return sum + value;
+    }, 0);
+    
+    const totalPreviousAppBookings = appMetrics.reduce((sum, metric) => {
+      const value = typeof metric.previousPeriod.value === 'number' ? metric.previousPeriod.value : 0;
+      return sum + value;
+    }, 0);
+    
+    const trendPercentage = totalPreviousAppBookings ? 
+      ((totalAppBookings - totalPreviousAppBookings) / totalPreviousAppBookings) * 100 : 0;
+    
+    return {
+      value: totalAppBookings,
+      previousValue: totalPreviousAppBookings,
+      trend: trendPercentage > 0 ? 'up' : trendPercentage < 0 ? 'down' : 'stable',
+      trendPercentage: Math.abs(parseFloat(trendPercentage.toFixed(1)))
+    };
+  };
+  
+  const appBookings = calculateAppBookings();
+  
+  // Get brand app conversion
+  const brandAppConversionMetric = findMetric("conversion", "brand app conversion");
+  
+  // Default trend data if we can't find specific metrics
+  const defaultTrendData = [
+    { x: 0, y: 100 }, { x: 1, y: 102 }, { x: 2, y: 104 }, { x: 3, y: 103 },
+    { x: 4, y: 106 }, { x: 5, y: 105 }, { x: 6, y: 107 }, { x: 7, y: 106 }
+  ];
+  
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-fade-up">
       <MetricSummary
         title="Total Bookings"
-        value="100,955"
-        previousValue="99,480"
-        trendData={[
-          { x: 0, y: 95000 },
-          { x: 1, y: 96500 },
-          { x: 2, y: 98000 },
-          { x: 3, y: 97000 },
-          { x: 4, y: 99000 },
-          { x: 5, y: 100500 },
-          { x: 6, y: 99800 },
-          { x: 7, y: 100955 },
-        ]}
-        trend="up"
-        trendPercentage={1.5}
+        value={totalBookingsMetric?.currentPeriod.value || "N/A"}
+        previousValue={totalBookingsMetric?.previousPeriod.value || "N/A"}
+        trendData={totalBookingsMetric?.trendData || defaultTrendData}
+        trend={totalBookingsMetric?.currentPeriod.trend || 'stable'}
+        trendPercentage={totalBookingsMetric?.currentPeriod.trendPercentage || 0}
       />
       
       <MetricSummary
         title="Overall Conversion"
-        value="0.71"
-        previousValue="0.78"
-        trendData={[
-          { x: 0, y: 0.79 },
-          { x: 1, y: 0.77 },
-          { x: 2, y: 0.75 },
-          { x: 3, y: 0.73 },
-          { x: 4, y: 0.76 },
-          { x: 5, y: 0.74 },
-          { x: 6, y: 0.72 },
-          { x: 7, y: 0.71 },
-        ]}
-        trend="down"
-        trendPercentage={9.0}
+        value={overallConversionMetric?.currentPeriod.value || "N/A"}
+        previousValue={overallConversionMetric?.previousPeriod.value || "N/A"}
+        trendData={overallConversionMetric?.trendData || defaultTrendData}
+        trend={overallConversionMetric?.currentPeriod.trend || 'stable'}
+        trendPercentage={overallConversionMetric?.currentPeriod.trendPercentage || 0}
       />
       
       <MetricSummary
         title="App Bookings"
-        value="63,350"
-        previousValue="62,976"
-        trendData={[
-          { x: 0, y: 62000 },
-          { x: 1, y: 62400 },
-          { x: 2, y: 63000 },
-          { x: 3, y: 62800 },
-          { x: 4, y: 63100 },
-          { x: 5, y: 63300 },
-          { x: 6, y: 63250 },
-          { x: 7, y: 63350 },
-        ]}
-        trend="up"
-        trendPercentage={0.6}
+        value={appBookings?.value || "N/A"}
+        previousValue={appBookings?.previousValue || "N/A"}
+        trendData={totalBookingsMetric?.trendData || defaultTrendData}
+        trend={appBookings?.trend || 'stable'}
+        trendPercentage={appBookings?.trendPercentage || 0}
       />
       
       <MetricSummary
         title="Brand App Conversion"
-        value="1.38%"
-        previousValue="1.51%"
-        trendData={[
-          { x: 0, y: 1.51 },
-          { x: 1, y: 1.49 },
-          { x: 2, y: 1.47 },
-          { x: 3, y: 1.45 },
-          { x: 4, y: 1.42 },
-          { x: 5, y: 1.41 },
-          { x: 6, y: 1.39 },
-          { x: 7, y: 1.38 },
-        ]}
-        trend="down"
-        trendPercentage={8.6}
+        value={brandAppConversionMetric?.currentPeriod.value || "N/A"}
+        previousValue={brandAppConversionMetric?.previousPeriod.value || "N/A"}
+        trendData={brandAppConversionMetric?.trendData || defaultTrendData}
+        trend={brandAppConversionMetric?.currentPeriod.trend || 'stable'}
+        trendPercentage={brandAppConversionMetric?.currentPeriod.trendPercentage || 0}
       />
     </div>
   );

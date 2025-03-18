@@ -1,8 +1,132 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingDownIcon, TrendingUpIcon, AlertCircleIcon } from "lucide-react";
+import { Category, Metric } from "@/types/metrics";
+import { useMemo } from "react";
 
-const MetricInsights = () => {
+interface MetricInsightsProps {
+  categories: Category[];
+}
+
+const MetricInsights = ({ categories }: MetricInsightsProps) => {
+  const insights = useMemo(() => {
+    const result = {
+      positiveInsights: [] as { title: string; description: string }[],
+      negativeInsights: [] as { title: string; description: string }[],
+      warningInsights: [] as { title: string; description: string }[]
+    };
+    
+    // Find metrics with significant changes
+    categories.forEach(category => {
+      category.metrics.forEach(metric => {
+        // Skip metrics without current or previous values
+        if (metric.currentPeriod.value === '' || metric.previousPeriod.value === '') {
+          return;
+        }
+        
+        // Convert values to numbers if they're strings with numbers
+        const currentValue = typeof metric.currentPeriod.value === 'string' 
+          ? parseFloat(metric.currentPeriod.value.replace('%', '')) 
+          : metric.currentPeriod.value;
+        
+        const previousValue = typeof metric.previousPeriod.value === 'string'
+          ? parseFloat(metric.previousPeriod.value.replace('%', ''))
+          : metric.previousPeriod.value;
+        
+        // Skip if values aren't numbers
+        if (isNaN(Number(currentValue)) || isNaN(Number(previousValue))) {
+          return;
+        }
+        
+        const percentChange = ((Number(currentValue) - Number(previousValue)) / Number(previousValue)) * 100;
+        
+        // Add significant positive changes to positive insights
+        if (percentChange > 5) {
+          result.positiveInsights.push({
+            title: `${metric.name} Increase`,
+            description: `${metric.name} has increased by ${percentChange.toFixed(1)}% compared to the previous period.`
+          });
+        }
+        
+        // Add significant negative changes to negative insights
+        else if (percentChange < -5) {
+          result.negativeInsights.push({
+            title: `${metric.name} Decrease`,
+            description: `${metric.name} has decreased by ${Math.abs(percentChange).toFixed(1)}% compared to the previous period.`
+          });
+        }
+        
+        // Check for warning conditions (below average)
+        const febValue = typeof metric.febAvg.value === 'string'
+          ? parseFloat(metric.febAvg.value.replace('%', ''))
+          : metric.febAvg.value;
+        
+        const janValue = typeof metric.janAvg.value === 'string'
+          ? parseFloat(metric.janAvg.value.replace('%', ''))
+          : metric.janAvg.value;
+        
+        if (!isNaN(Number(febValue)) && !isNaN(Number(janValue)) && 
+            Number(currentValue) < Number(febValue) && Number(currentValue) < Number(janValue)) {
+          result.warningInsights.push({
+            title: `${metric.name} Below Average`,
+            description: `${metric.name} is currently below both January and February averages. This may require attention.`
+          });
+        }
+      });
+    });
+    
+    // Limit to top 3 insights of each type
+    return {
+      positiveInsights: result.positiveInsights.slice(0, 3),
+      negativeInsights: result.negativeInsights.slice(0, 3),
+      warningInsights: result.warningInsights.slice(0, 3)
+    };
+  }, [categories]);
+  
+  // Generate recommendations based on insights
+  const recommendations = useMemo(() => {
+    const recommendations = [];
+    
+    // Add recommendations based on negative insights
+    if (insights.negativeInsights.length > 0) {
+      recommendations.push({
+        title: `Investigate ${insights.negativeInsights[0].title}`,
+        description: `Analyze the factors contributing to the decrease in ${insights.negativeInsights[0].title.split(' ')[0]} and implement corrective actions.`
+      });
+    }
+    
+    // Add recommendations based on warning insights
+    if (insights.warningInsights.length > 0) {
+      recommendations.push({
+        title: `Address ${insights.warningInsights[0].title}`,
+        description: `Review historical data and identify patterns that led to the below-average performance in ${insights.warningInsights[0].title.split(' ')[0]}.`
+      });
+    }
+    
+    // Add recommendations based on positive insights
+    if (insights.positiveInsights.length > 0) {
+      recommendations.push({
+        title: `Leverage ${insights.positiveInsights[0].title} Success`,
+        description: `Analyze the factors contributing to the increase in ${insights.positiveInsights[0].title.split(' ')[0]} and consider applying successful elements to other areas.`
+      });
+    }
+    
+    // Add a generic recommendation if we don't have enough
+    if (recommendations.length < 3) {
+      recommendations.push({
+        title: "Perform Comprehensive Data Analysis",
+        description: "Conduct a deeper analysis of all metrics to identify hidden patterns and opportunities for improvement."
+      });
+    }
+    
+    return recommendations.slice(0, 3);
+  }, [insights]);
+  
+  // If we don't have any real insights, use defaults
+  const useDefaultInsights = insights.positiveInsights.length === 0 && 
+                             insights.negativeInsights.length === 0 && 
+                             insights.warningInsights.length === 0;
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 animate-fade-up">
       <Card className="overflow-hidden">
@@ -17,35 +141,79 @@ const MetricInsights = () => {
         </CardHeader>
         <CardContent className="pt-4">
           <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="bg-red-100 p-2 rounded-full">
-                <TrendingDownIcon className="h-4 w-4 text-red-600" />
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold mb-1">Conversion Rate Decrease</h4>
-                <p className="text-sm text-gray-600">Overall conversion has decreased by 9% compared to the previous period. This is primarily driven by a decline in Brand app conversion (-8.6%).</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div className="bg-green-100 p-2 rounded-full">
-                <TrendingUpIcon className="h-4 w-4 text-green-600" />
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold mb-1">Strong Train App Performance</h4>
-                <p className="text-sm text-gray-600">Train App bookings have increased by 5.2% week-over-week, outperforming other booking channels. This represents a continuing upward trend from February's average.</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div className="bg-amber-100 p-2 rounded-full">
-                <AlertCircleIcon className="h-4 w-4 text-amber-600" />
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold mb-1">iOS Booking Decline</h4>
-                <p className="text-sm text-gray-600">Brand iOS bookings have decreased by 2.4% compared to the previous period and are below both January and February averages. This may require investigation.</p>
-              </div>
-            </div>
+            {useDefaultInsights ? (
+              // Default insights
+              <>
+                <div className="flex items-start gap-3">
+                  <div className="bg-red-100 p-2 rounded-full">
+                    <TrendingDownIcon className="h-4 w-4 text-red-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Conversion Rate Decrease</h4>
+                    <p className="text-sm text-gray-600">Overall conversion has decreased by 9% compared to the previous period. This is primarily driven by a decline in Brand app conversion (-8.6%).</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-green-100 p-2 rounded-full">
+                    <TrendingUpIcon className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Strong Train App Performance</h4>
+                    <p className="text-sm text-gray-600">Train App bookings have increased by 5.2% week-over-week, outperforming other booking channels. This represents a continuing upward trend from February's average.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-amber-100 p-2 rounded-full">
+                    <AlertCircleIcon className="h-4 w-4 text-amber-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">iOS Booking Decline</h4>
+                    <p className="text-sm text-gray-600">Brand iOS bookings have decreased by 2.4% compared to the previous period and are below both January and February averages. This may require investigation.</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              // Generated insights
+              <>
+                {insights.negativeInsights.map((insight, index) => (
+                  <div key={`negative-${index}`} className="flex items-start gap-3">
+                    <div className="bg-red-100 p-2 rounded-full">
+                      <TrendingDownIcon className="h-4 w-4 text-red-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold mb-1">{insight.title}</h4>
+                      <p className="text-sm text-gray-600">{insight.description}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {insights.positiveInsights.map((insight, index) => (
+                  <div key={`positive-${index}`} className="flex items-start gap-3">
+                    <div className="bg-green-100 p-2 rounded-full">
+                      <TrendingUpIcon className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold mb-1">{insight.title}</h4>
+                      <p className="text-sm text-gray-600">{insight.description}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {insights.warningInsights.map((insight, index) => (
+                  <div key={`warning-${index}`} className="flex items-start gap-3">
+                    <div className="bg-amber-100 p-2 rounded-full">
+                      <AlertCircleIcon className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold mb-1">{insight.title}</h4>
+                      <p className="text-sm text-gray-600">{insight.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -62,35 +230,55 @@ const MetricInsights = () => {
         </CardHeader>
         <CardContent className="pt-4">
           <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="bg-blue-100 p-2 rounded-full">
-                <span className="text-xs font-bold text-blue-600">1</span>
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold mb-1">Investigate Conversion Drop</h4>
-                <p className="text-sm text-gray-600">Analyze funnel steps to identify specific drop-off points in the brand app user journey that may be causing the conversion decline.</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div className="bg-blue-100 p-2 rounded-full">
-                <span className="text-xs font-bold text-blue-600">2</span>
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold mb-1">Optimize iOS App Experience</h4>
-                <p className="text-sm text-gray-600">Review recent iOS app updates or changes that may have negatively impacted the booking process. Consider A/B testing improvements.</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div className="bg-blue-100 p-2 rounded-full">
-                <span className="text-xs font-bold text-blue-600">3</span>
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold mb-1">Leverage Train App Success</h4>
-                <p className="text-sm text-gray-600">Analyze the factors contributing to Train App growth and consider applying successful elements to other booking channels.</p>
-              </div>
-            </div>
+            {useDefaultInsights ? (
+              // Default recommendations
+              <>
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 p-2 rounded-full">
+                    <span className="text-xs font-bold text-blue-600">1</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Investigate Conversion Drop</h4>
+                    <p className="text-sm text-gray-600">Analyze funnel steps to identify specific drop-off points in the brand app user journey that may be causing the conversion decline.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 p-2 rounded-full">
+                    <span className="text-xs font-bold text-blue-600">2</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Optimize iOS App Experience</h4>
+                    <p className="text-sm text-gray-600">Review recent iOS app updates or changes that may have negatively impacted the booking process. Consider A/B testing improvements.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 p-2 rounded-full">
+                    <span className="text-xs font-bold text-blue-600">3</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold mb-1">Leverage Train App Success</h4>
+                    <p className="text-sm text-gray-600">Analyze the factors contributing to Train App growth and consider applying successful elements to other booking channels.</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              // Generated recommendations
+              <>
+                {recommendations.map((recommendation, index) => (
+                  <div key={`rec-${index}`} className="flex items-start gap-3">
+                    <div className="bg-blue-100 p-2 rounded-full">
+                      <span className="text-xs font-bold text-blue-600">{index + 1}</span>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold mb-1">{recommendation.title}</h4>
+                      <p className="text-sm text-gray-600">{recommendation.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
