@@ -1,10 +1,11 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -13,8 +14,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -33,22 +34,6 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -79,14 +64,6 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -96,6 +73,112 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
   }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Metric card styles */
+.metric-card {
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+}
+
+/* Chart animations */
+.chart-container {
+  opacity: 0;
+  animation: fade-up 0.5s ease-out forwards;
+}
+
+/* Trend line animation */
+.trend-line path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: dash 2s ease-in-out forwards;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Status indicators */
+.status-positive {
+  background-color: #E7F9EF;
+  color: #10b981;
+}
+
+.status-negative {
+  background-color: #FEECED;
+  color: #ef4444;
+}
+
+.status-neutral {
+  background-color: #F1F0FB;
+  color: #6366f1;
+}
+
+/* Staggered animation for metric rows */
+.metric-row {
+  animation-fill-mode: both;
+  animation-duration: 0.5s;
+  animation-name: fade-up;
+  animation-timing-function: cubic-bezier(0.5, 0, 0, 1);
+}
+
+.metric-row:nth-child(1) { animation-delay: 0.1s; }
+.metric-row:nth-child(2) { animation-delay: 0.15s; }
+.metric-row:nth-child(3) { animation-delay: 0.2s; }
+.metric-row:nth-child(4) { animation-delay: 0.25s; }
+.metric-row:nth-child(5) { animation-delay: 0.3s; }
+.metric-row:nth-child(6) { animation-delay: 0.35s; }
+.metric-row:nth-child(7) { animation-delay: 0.4s; }
+.metric-row:nth-child(8) { animation-delay: 0.45s; }
+.metric-row:nth-child(9) { animation-delay: 0.5s; }
+.metric-row:nth-child(10) { animation-delay: 0.55s; }
+
+/* Loading animation */
+.loading-shimmer {
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0) 0%, 
+    rgba(255,255,255,0.6) 50%, 
+    rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
