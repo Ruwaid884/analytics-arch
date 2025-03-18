@@ -2,14 +2,14 @@
 import { ArrowDownIcon, ArrowUpIcon, TrendingUpIcon } from "lucide-react";
 import TrendChart from "./TrendChart";
 import { cn } from "@/lib/utils";
-import { Category } from "@/types/metrics";
+import { Category, TrendDirection } from "@/types/metrics";
 
 interface MetricSummaryProps {
   title: string;
   value: string | number;
   previousValue: string | number;
   trendData: Array<{ x: number; y: number }>;
-  trend: 'up' | 'down' | 'stable';
+  trend: TrendDirection;
   trendPercentage: number;
 }
 
@@ -98,10 +98,13 @@ const DashboardSummary = ({ categories }: DashboardSummaryProps) => {
     const trendPercentage = totalPreviousAppBookings ? 
       ((totalAppBookings - totalPreviousAppBookings) / totalPreviousAppBookings) * 100 : 0;
     
+    // Fix: Cast the string trend to TrendDirection type
+    const trendDirection: TrendDirection = trendPercentage > 0 ? 'up' : trendPercentage < 0 ? 'down' : 'stable';
+    
     return {
       value: totalAppBookings,
       previousValue: totalPreviousAppBookings,
-      trend: trendPercentage > 0 ? 'up' : trendPercentage < 0 ? 'down' : 'stable',
+      trend: trendDirection,
       trendPercentage: Math.abs(parseFloat(trendPercentage.toFixed(1)))
     };
   };
