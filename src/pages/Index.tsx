@@ -5,7 +5,6 @@ import MetricsTable from "@/components/Dashboard/MetricsTable";
 import DrillDownChart from "@/components/Dashboard/DrillDownChart";
 import MetricInsights from "@/components/Dashboard/MetricInsights";
 import CsvUpload from "@/components/Dashboard/CsvUpload";
-import CsvTemplate from "@/components/Dashboard/CsvTemplate";
 import { Button } from "@/components/ui/button";
 import { mockCategories, periods } from "@/utils/mockData";
 import { Category } from "@/types/metrics";
@@ -108,19 +107,7 @@ const Index = () => {
         <div className="flex justify-between items-center mb-6">
           <div className="flex space-x-4 items-center">
             <CsvUpload onDataUpdate={handleDataUpdate} />
-            <CsvTemplate />
           </div>
-          
-          {!isUsingMockData && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={resetToMockData}
-              className="text-xs"
-            >
-              Reset to Default Data
-            </Button>
-          )}
         </div>
         
         <DashboardSummary categories={categories} />

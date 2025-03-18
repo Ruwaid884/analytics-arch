@@ -357,16 +357,6 @@ const CsvUpload = ({ onDataUpdate }: CsvUploadProps) => {
           </Button>
         </div>
         
-        <Button
-          variant="outline"
-          className="flex items-center gap-2"
-          onClick={loadDefaultCsvFile}
-          disabled={isUploading}
-        >
-          <RefreshCw className="h-4 w-4" />
-          Reload Default CSV
-        </Button>
-        
         <div className="text-sm text-gray-500">
           {hasAutoLoaded ? "Using default CSV data" : "Update dashboard with your own metrics data"}
         </div>

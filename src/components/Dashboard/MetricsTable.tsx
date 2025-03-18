@@ -235,20 +235,10 @@ const MetricsTable = ({
             <tbody className="bg-white divide-y divide-gray-200">
               {Object.entries(groupedMetrics).map(([l2Category, metrics], groupIndex) => (
                 <React.Fragment key={`l2-${l2Category}`}>
-                  {/* L2 Category Header Row */}
-                  <tr className="bg-gray-50">
-                    <td 
-                      colSpan={2 + visibleGroups.flat().length} 
-                      className="py-2 px-4 text-xs font-semibold text-gray-700 uppercase"
-                    >
-                      {l2Category}
-                    </td>
-                  </tr>
-                  
                   {/* Metrics within this L2 Category */}
                   {metrics.map((metric, metricIndex) => (
                     <tr key={metric.id} className={metricIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                      <td className="py-3 px-4 text-sm text-gray-900 sticky left-0 bg-inherit z-10 pl-8">
+                      <td className="py-3 px-4 text-sm text-gray-900 sticky left-0 bg-inherit pl-8">
                         {metric.name}
                       </td>
                       <td className="py-3 px-4 text-center">
